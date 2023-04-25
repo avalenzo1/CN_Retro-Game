@@ -1,3 +1,5 @@
+"use strict"
+
 /** 
  * Game Constants, Variables
  * These affect the display and mood of the game
@@ -19,6 +21,7 @@ const MAZE_PELLET_SCORE = 1;
 let highscore = 1000;
 let score = 0;
 let timer = null;
+let current;
 
 // import pacman from "/assets/pacman.json" assert { type: "json" };
 
@@ -140,8 +143,8 @@ class Player {
     }
 
     // Coordinates of Pac Man
-    this.x = 0;
-    this.y = 0;
+    this.rowNumber = 0;
+    this.columnNumber = 0;
 
     // Direction Pac Man Faces
 
@@ -153,15 +156,15 @@ class Player {
   }
 
   movePlayer() {
-    if (this.direction == "left") { this.x-- }
-    else if (this.direction == "right") { this.x++ }
-    else if (this.direction == "up") { this.y-- }
-    else if (this.direction == "down") { this.y++ };
+    if (this.direction == "left") { this.rowNumber-- }
+    else if (this.direction == "right") { this.rowNumber++ }
+    else if (this.direction == "up") { this.columnNumber-- }
+    else if (this.direction == "down") { this.columnNumber++ };
 
-    if (this.x < 0) { this.x = 0; }
-    if (this.y < 0) { this.y = 0; }
-    if (this.x > MAZE_ROWS - 1) { this.x = MAZE_ROWS - 1; }
-    if (this.y > MAZE_COLUMNS - 1) { this.y = MAZE_COLUMNS - 1; }
+    if (this.rowNumber < 0) { this.rowNumber = 0; }
+    if (this.columnNumber < 0) { this.columnNumber = 0; }
+    if (this.rowNumber > MAZE_ROWS - 1) { this.rowNumber = MAZE_ROWS - 1; }
+    if (this.columnNumber > MAZE_COLUMNS - 1) { this.columnNumber = MAZE_COLUMNS - 1; }
   }
 
   changeAnimation() {
@@ -227,7 +230,7 @@ class Player {
   render(ctx) {
     ctx.save();
 
-    ctx.translate(this.x * MAZE_ROW_SCALE, this.y * MAZE_COLUMN_SCALE)
+    ctx.translate(this.rowNumber * MAZE_ROW_SCALE, this.columnNumber * MAZE_COLUMN_SCALE)
 
     ctx.imageSmoothingEnabled = false;
 
@@ -249,14 +252,22 @@ class Player {
 
 // https://www.youtube.com/watch?v=nHjqkLV_Tp0
 
-let current;
-
 class Maze {
   constructor(player) {
     this.player = player;
     this.grid = [];
     this.stack = [];
     this.ready = false;
+
+    // You can predict how many steps it will take to finish the maze.
+    // This program is not very efficient and is 
+
+    this.estimatedTotalSteps = 2 * (MAZE_COLUMNS * MAZE_ROWS);
+    this.steps = 2;
+  }
+
+  get progress() {
+    return this.steps / this.estimatedTotalSteps;
   }
 
   initialize() {
@@ -271,8 +282,34 @@ class Maze {
     }
 
     current = this.grid[0][0];
+  }
 
-    console.log(this.grid)
+  generateMaze(ctx) {
+    let next = current.checkNeighbors();
+
+    if (next) {
+      next.visited = true;
+
+      this.stack.push(current);
+
+      current.highlight(ctx);
+
+      current.removeWalls(current, next);
+
+      current = next;
+    } else if (this.stack.length > 0) {
+      let cell = this.stack.pop();
+
+      current = cell;
+      current.highlight(ctx);
+    }
+
+    this.steps++;
+
+    if (this.stack.length == 0) {
+      this.ready = true;
+      return;
+    }
   }
 
   render(ctx) {
@@ -285,29 +322,7 @@ class Maze {
       }
     }
 
-    let next = current.checkNeighbors();
-
-    if (next) {
-      next.visited = true;
-
-      this.stack.push(current);
-
-      // current.highlight(ctx);
-
-      current.removeWalls(current, next);
-
-      current = next;
-    } else if (this.stack.length > 0) {
-      let cell = this.stack.pop();
-
-      current = cell;
-      // current.highlight(ctx);
-    }
-
-    if (this.stack.length == 0) {
-      this.ready = true;
-      return;
-    }
+    if (!this.ready) this.generateMaze(ctx);
   }
 }
 
@@ -328,15 +343,15 @@ class Cell {
 
   removeWalls(cell1, cell2) {
     // If there are two overlaping walls, remove one wall
+    // OMGOOSH FINALLY FOUND THE ERROR AND IT WAS HERE!!!! ASFHA(UISVFUIASHFHUAHSFUIJA SFUIAUI)
     let x = cell1.columnNumber - cell2.columnNumber;
 
     if (x == 1) {
       cell1.walls.left = false;
       cell2.walls.right = false;
     } else if (x == -1) {
-      cell2.walls.right = false;
-      cell1.walls.left = false;
-
+      cell1.walls.right = false;
+      cell2.walls.left = false;
     }
 
     let y = cell1.rowNumber - cell2.rowNumber;
@@ -345,9 +360,8 @@ class Cell {
       cell1.walls.top = false;
       cell2.walls.bottom = false;
     } else if (y == -1) {
-      cell2.walls.bottom = false;
-      cell1.walls.top = false;
-
+      cell1.walls.bottom = false;
+      cell2.walls.top = false;
     }
   }
 
@@ -357,19 +371,19 @@ class Cell {
     let col = this.columnNumber;
     let neighbors = [];
 
-    let left = (col !== 0) ? grid[row][col - 1] : undefined;
-    let right = (col !== grid.length - 1) ? grid[row][col + 1] : undefined;
-    let top = (row !== 0) ? grid[row - 1][col] : undefined;
-    let bottom = (row !== grid.length - 1) ? grid[row + 1][col] : undefined;
 
+    let top = (row !== 0) ? grid[row - 1][col] : undefined;
+    let right = (col !== grid.length - 1) ? grid[row][col + 1] : undefined;
+    let bottom = (row !== grid.length - 1) ? grid[row + 1][col] : undefined;
+    let left = (col !== 0) ? grid[row][col - 1] : undefined;
 
     if (left && !left.visited) neighbors.push(left);
     if (right && !right.visited) neighbors.push(right);
     if (top && !top.visited) neighbors.push(top);
     if (bottom && !bottom.visited) neighbors.push(bottom);
 
-
     if (neighbors.length !== 0) {
+      // Gets a random element from neighbors list to go to next
       let random = Math.floor(Math.random() * neighbors.length);
 
       return neighbors[random];
@@ -390,8 +404,6 @@ class Cell {
     ctx.strokeStyle = "#fff";
     ctx.fillStyle = "#f002";
     ctx.lineWidth = 3;
-
-
 
     if (this.walls.left) {
       ctx.beginPath();
@@ -446,14 +458,6 @@ function startGame() {
   // How do I initialize this if it's asynchronous?
   console.log(pacman.animation)
 
-  setInterval(() => {
-    console.log(pacman.animation)
-    console.log("maze.stack")
-    console.log(maze.stack)
-    console.log("maze.grid")
-    console.log(maze.grid)
-  }, 2500)
-
   function repeatForever() {
     ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     // background
@@ -473,12 +477,16 @@ function startGame() {
       ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
       ctx.fillStyle = "#fff";
+      ctx.textAlign = "left";
+      ctx.font = "12px monospace";
+      ctx.fillText(`${(maze.progress * 100).toFixed(1)}%`, 12, 24);
+      
       ctx.font = "24px monospace";
       ctx.textAlign = "center";
-      ctx.fillText("Loading Maze...", CANVAS_HEIGHT / 2, CANVAS_HEIGHT / 2);
+      ctx.fillText("Loading Maze...", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
 
       ctx.fillStyle = "#ff0";
-      ctx.fillRect(0, 0, CANVAS_WIDTH / maze.stack.length, 2);
+      ctx.fillRect(0, 0, CANVAS_WIDTH * (maze.progress), 4);
     }
 
     window.requestAnimationFrame(repeatForever);
@@ -487,11 +495,11 @@ function startGame() {
   window.requestAnimationFrame(repeatForever);
 }
 
-function verifyCollision() {
-
+function loadingScreen(ctx) {
+  
 }
 
-function gameOver() {
+function gameOver(ctx) {
 
 }
 

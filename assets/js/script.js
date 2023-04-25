@@ -7,8 +7,8 @@ const CANVAS_WIDTH = 500;
 const CANVAS_HEIGHT = 500;
 
 const MAZE_SIZE = CANVAS_WIDTH;
-const MAZE_ROWS = 5;
-const MAZE_COLUMNS = 5;
+const MAZE_ROWS = 10;
+const MAZE_COLUMNS = 10;
 
 const MAZE_ROW_SCALE = MAZE_SIZE / MAZE_ROWS;
 const MAZE_COLUMN_SCALE = MAZE_SIZE / MAZE_COLUMNS;
@@ -256,18 +256,17 @@ class Maze {
     this.player = player;
     this.grid = [];
     this.stack = [];
+    this.ready = false;
   }
 
   initialize() {
     for (let r = 0; r < MAZE_ROWS; r++) {
       let row = [];
-
       for (let c = 0; c < MAZE_COLUMNS; c++) {
         let cell = new Cell(r, c, this.grid);
 
         row.push(cell);
       }
-
       this.grid.push(row);
     }
 
@@ -293,18 +292,20 @@ class Maze {
 
       this.stack.push(current);
 
+      // current.highlight(ctx);
+
       current.removeWalls(current, next);
-      current.highlight(ctx);
 
       current = next;
     } else if (this.stack.length > 0) {
       let cell = this.stack.pop();
 
       current = cell;
-      current.highlight(ctx);
+      // current.highlight(ctx);
     }
 
     if (this.stack.length == 0) {
+      this.ready = true;
       return;
     }
   }
@@ -356,15 +357,17 @@ class Cell {
     let col = this.columnNumber;
     let neighbors = [];
 
-    let top = (row !== 0) ? grid[row - 1][col] : undefined;
-    let right = (col !== grid.length - 1) ? grid[row][col + 1] : undefined;
-    let bottom = (row !== grid.length - 1) ? grid[row + 1][col] : undefined;
     let left = (col !== 0) ? grid[row][col - 1] : undefined;
+    let right = (col !== grid.length - 1) ? grid[row][col + 1] : undefined;
+    let top = (row !== 0) ? grid[row - 1][col] : undefined;
+    let bottom = (row !== grid.length - 1) ? grid[row + 1][col] : undefined;
 
-    if (top && !top.visited) neighbors.push(top);
-    if (right && !right.visited) neighbors.push(right);
-    if (bottom && !bottom.visited) neighbors.push(bottom);
+
     if (left && !left.visited) neighbors.push(left);
+    if (right && !right.visited) neighbors.push(right);
+    if (top && !top.visited) neighbors.push(top);
+    if (bottom && !bottom.visited) neighbors.push(bottom);
+
 
     if (neighbors.length !== 0) {
       let random = Math.floor(Math.random() * neighbors.length);
@@ -418,8 +421,6 @@ class Cell {
       ctx.stroke();
     }
 
-
-
     if (this.visited) {
       ctx.fillRect(MAZE_COLUMN_SCALE * this.columnNumber, MAZE_ROW_SCALE * this.rowNumber, MAZE_COLUMN_SCALE, MAZE_ROW_SCALE);
     }
@@ -430,12 +431,15 @@ class Cell {
 let canvas = document.getElementById("canvas");
 let start = document.getElementById("start");
 
+canvas.width = CANVAS_WIDTH;
+canvas.height = CANVAS_HEIGHT;
+
 function startGame() {
   let ctx = canvas.getContext("2d");
 
   let player = new Player();
   let maze = new Maze(player);
-      maze.initialize();
+  maze.initialize();
 
   let pacman = new Sprite_V2("/assets/js/sprites.json", "@pacman/default");
 
@@ -460,7 +464,22 @@ function startGame() {
     maze.render(ctx);
 
     // player
-    player.render(ctx);
+
+    if (maze.ready) player.render(ctx);
+
+    if (!maze.ready) {
+      // background
+      ctx.fillStyle = "#000c";
+      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+      ctx.fillStyle = "#fff";
+      ctx.font = "24px monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("Loading Maze...", CANVAS_HEIGHT / 2, CANVAS_HEIGHT / 2);
+
+      ctx.fillStyle = "#ff0";
+      ctx.fillRect(0, 0, CANVAS_WIDTH / maze.stack.length, 2);
+    }
 
     window.requestAnimationFrame(repeatForever);
   }

@@ -1,12 +1,58 @@
 [
   {
     "id": 1,
-    "fact": "David Levy, a student in this field, believes that marriage between humans and robots will be made legal by 2050. At the moment robots are not so advanced enough for this."
-    "source": "https://www.analyticsinsight.net/10-insightful-facts-you-didnt-know-about-artificial-intelligence/"
+    "fact": "David Levy, a student in this field, believes that marriage between humans and robots will be made legal by 2050. At the moment robots are not so advanced enough for this.",
+    "source": "https://www.analyticsinsight.net/10-insightful-facts-you-didnt-know-about-artificial-intelligence/",
+    "column": 2,
+    "row": 5
   },
   {
     "id": 2,
-    "fact": ""
-    "source": ""
-  }
+    "fact": "By 2024 8.4 billion AI-powered digital voice assistant units there will be more AI assistants than people in this world",
+    "source": "https://www.emerald.com/insight/content/doi/10.1108/JRIM-10-2022-0328/full/html?skipTracking=true#:~:text=The%20popularity%20of%20artificial%20intelligence,population%20(Laricchia%2C%202022).",
+    "column": 2,
+    "row": 5
+  },
+  {
+    "id": 3,
+    "fact": "AI-enabled devices are everywhere. Nearly 77 percent of devices today use AI technology in one form or another.",
+    "source": "",
+    "column": 2,
+    "row": 5
+  },
+  {
+    "id": 4,
+    "fact": "AI will help the healthcare field by conducting diagnosis for patients.",
+    "source": "",
+    "column": 2,
+    "row": 5
+  },
+  {
+    "id": 5,
+    "fact": "In China AI is being used in education to help children who can’t affor a tutor receive homework help.",
+    "source": "",
+    "column": 2,
+    "row": 5
+  },
+  {
+    "id": 6,
+    "fact": "By 2030, Artificial Intelligence will add 15.7 trillion dollars to the world's GDP, boosting it by 14 percent.",
+    "source": "https://www.analyticsinsight.net/10-insightful-facts-you-didnt-know-about-artificial-intelligence/",
+    "column": 2,
+    "row": 5
+  },
+  {
+    "id": 7,
+    "fact": "AI can Repair Itself A robot that rebuilt itself after noticing its performance had dropped after losing two of its six legs. The robot did not know what the problem was but fixed it by trial and error.",
+    "source": "https://www.analyticsinsight.net/10-insightful-facts-you-didnt-know-about-artificial-intelligence/",
+    "column": 2,
+    "row": 5
+  },
+  {
+    "id": 7,
+    "fact": "AI Recognises Emotions A robot built in the late 1990s called Kismet can recognise emotions through human body language and voice tone.",
+    "source": "https://www.analyticsinsight.net/10-insightful-facts-you-didnt-know-about-artificial-intelligence/",
+    "column": 2,
+    "row": 5
+  },
 ]

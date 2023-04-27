@@ -18,6 +18,7 @@ const MAZE_COLUMN_SCALE = MAZE_SIZE / MAZE_COLUMNS;
 const MAZE_COUNTDOWN = 30;
 const MAZE_PELLET_SCORE = 1;
 
+let factsAI = 0;
 let highscore = 1000;
 let score = 0;
 let timer = null;
@@ -65,7 +66,6 @@ class Sprite_V2 {
   constructor(src, name) {
     this.src = src;
     this.name = name;
-    this.ready = false;
   }
 
   async initialize() {
@@ -75,7 +75,7 @@ class Sprite_V2 {
     this.meta = json.sprites[this.name].meta;
     this.animation = json.sprites[this.name].animation;
 
-    this.ready = true;
+    return;
   }
 
   toImagePosition(row, col) {
@@ -95,9 +95,11 @@ class Sprite_V2 {
 // END OF EXTERNAL CODE
 
 class Player {
-  constructor() {
+  constructor(grid, ctx) {
     this.image = new Image();
     this.image.src = "/assets/images/sprites.png";
+    this.grid = grid;
+    this.ctx = ctx;
 
     this.sprite = new Sprite(13, 13, 7, 7);
 
@@ -156,10 +158,21 @@ class Player {
   }
 
   movePlayer() {
-    if (this.direction == "left") { this.rowNumber-- }
-    else if (this.direction == "right") { this.rowNumber++ }
-    else if (this.direction == "up") { this.columnNumber-- }
-    else if (this.direction == "down") { this.columnNumber++ };
+    let grid = this.grid;
+    let row = this.rowNumber;
+    let col = this.columnNumber;
+
+    let top = (row !== 0) ? grid[row - 1][col] : undefined;
+    let right = (col !== grid.length - 1) ? grid[row][col + 1] : undefined;
+    let bottom = (row !== grid.length - 1) ? grid[row + 1][col] : undefined;2
+    let left = (col !== 0) ? grid[row][col - 1] : undefined;
+
+    if (this.direction == "left" && (!left || !left.walls.right)) { this.columnNumber-- }
+    else if (this.direction == "right" && (!right || !right.walls.left)) { this.columnNumber++ }
+    else if (this.direction == "up" && (!top || !top.walls.bottom)) { this.rowNumber-- }
+    else if (this.direction == "down" && (!bottom || !bottom.walls.top)) { this.rowNumber++ };
+
+    grid[row][col].pellet = false;
 
     if (this.rowNumber < 0) { this.rowNumber = 0; }
     if (this.columnNumber < 0) { this.columnNumber = 0; }
@@ -177,8 +190,6 @@ class Player {
       this.animation[this.direction][this.frame][1]
     );
 
-    this.movePlayer();
-
     this.interval = setInterval(() => {
       if (this.frame == this.animation[this.direction].length - 1) {
         this.frame = 0;
@@ -191,8 +202,8 @@ class Player {
         this.animation[this.direction][this.frame][1]
       );
 
-      this.movePlayer();
-    }, 41.66666 * 2);
+
+    }, 80);
 
     // This checks if out of bounds, if so, moves back
 
@@ -223,14 +234,28 @@ class Player {
           break;
       }
 
+      this.movePlayer();
       this.changeAnimation();
     }
   }
 
   render(ctx) {
+    let grid = this.grid;
+    let row = this.rowNumber;
+    let col = this.columnNumber;
+    let top = (row !== 0) ? grid[row - 1][col] : undefined;
+    let right = (col !== grid.length - 1) ? grid[row][col + 1] : undefined;
+    let bottom = (row !== grid.length - 1) ? grid[row + 1][col] : undefined;
+    let left = (col !== 0) ? grid[row][col - 1] : undefined;
+
+
+    if (top) top.highlight(this.ctx)
+    if (right) right.highlight(this.ctx)
+    if (bottom) bottom.highlight(this.ctx)
+    if (left) left.highlight(this.ctx)
     ctx.save();
 
-    ctx.translate(this.rowNumber * MAZE_ROW_SCALE, this.columnNumber * MAZE_COLUMN_SCALE)
+    ctx.translate(this.columnNumber * MAZE_COLUMN_SCALE, this.rowNumber * MAZE_ROW_SCALE)
 
     ctx.imageSmoothingEnabled = false;
 
@@ -332,6 +357,7 @@ class Cell {
     this.columnNumber = columnNumber
     this.parentGrid = parentGrid;
     this.visited = false;
+    this.pellet = true;
 
     this.walls = {
       left: true,
@@ -394,16 +420,22 @@ class Cell {
 
   highlight(ctx) {
     let x = (this.columnNumber * MAZE_SIZE) / MAZE_COLUMNS + 1;
-    let y = (this.rowNumber * MAZE_SIZE) / MAZE_COLUMNS + 1;
+    let y = (this.rowNumber * MAZE_SIZE) / MAZE_ROWS + 1;
 
     ctx.fillStyle = "purple";
-    ctx.fillRect(x, y, MAZE_SIZE / MAZE_COLUMNS - 3, MAZE_SIZE / MAZE_COLUMNS - 3);
+    ctx.fillRect(x, y, MAZE_SIZE / MAZE_COLUMNS - 3, MAZE_SIZE / MAZE_ROWS - 3);
   }
 
   render(ctx) {
     ctx.strokeStyle = "#fff";
-    ctx.fillStyle = "#f002";
-    ctx.lineWidth = 3;
+    ctx.lineWidth = MAZE_COLUMN_SCALE * 0.05;
+
+    if (this.pellet) {
+      ctx.fillStyle = "#fff";
+      ctx.beginPath();
+      ctx.arc(MAZE_COLUMN_SCALE * this.columnNumber + (MAZE_COLUMN_SCALE / 2), MAZE_ROW_SCALE * this.rowNumber + (MAZE_ROW_SCALE / 2), MAZE_COLUMN_SCALE * 0.05, 0, 2 * Math.PI);
+      ctx.fill();
+    }
 
     if (this.walls.left) {
       ctx.beginPath();
@@ -432,10 +464,6 @@ class Cell {
       ctx.lineTo(MAZE_COLUMN_SCALE * this.columnNumber + MAZE_COLUMN_SCALE, MAZE_ROW_SCALE * this.rowNumber + MAZE_ROW_SCALE);
       ctx.stroke();
     }
-
-    if (this.visited) {
-      ctx.fillRect(MAZE_COLUMN_SCALE * this.columnNumber, MAZE_ROW_SCALE * this.rowNumber, MAZE_COLUMN_SCALE, MAZE_ROW_SCALE);
-    }
   }
 }
 
@@ -449,11 +477,16 @@ canvas.height = CANVAS_HEIGHT;
 function startGame() {
   let ctx = canvas.getContext("2d");
 
-  let player = new Player();
-  let maze = new Maze(player);
+  let maze = new Maze();
   maze.initialize();
 
+  let player = new Player(maze.grid, ctx);
+
   let pacman = new Sprite_V2("/assets/js/sprites.json", "@pacman/default");
+
+  pacman.initialize().then(() => {
+    console.log(pacman)
+  })
 
   // How do I initialize this if it's asynchronous?
   console.log(pacman.animation)
@@ -480,7 +513,7 @@ function startGame() {
       ctx.textAlign = "left";
       ctx.font = "12px monospace";
       ctx.fillText(`${(maze.progress * 100).toFixed(1)}%`, 12, 24);
-      
+
       ctx.font = "24px monospace";
       ctx.textAlign = "center";
       ctx.fillText("Loading Maze...", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
@@ -496,11 +529,15 @@ function startGame() {
 }
 
 function loadingScreen(ctx) {
-  
+
 }
 
 function gameOver(ctx) {
 
+}
+
+function displayFact() {
+  
 }
 
 startGame()

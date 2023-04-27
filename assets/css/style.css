@@ -1,4 +1,32 @@
 html, body {
   height: 100%;
   width: 100%;
+  background-color: #9b9dab;
+  margin: 0;
+}
+
+.main {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.small {
+  font-family: 'Bruno Ace SC', cursive;
+  font-size: 20px;
+  text-align: center;
+  color: purple;
+
+}
+
+.title{
+  font-family: 'Bruno Ace SC', cursive;
+  font-size: 30px;
+  text-align: center;
+  color: purple;
+  
+}
+
+.facts-container{
+  border:solid 2px;
+  
 }

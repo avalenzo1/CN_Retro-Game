@@ -23,14 +23,14 @@
   {
     "id": 4,
     "fact": "AI will help the healthcare field by conducting diagnosis for patients.",
-    "source": "",
+    "source": "https://appinventiv.com/blog/ai-in-medical-diagnosis/#:~:text=AI%20in%20medical%20diagnosis%20can,understand%20and%20define%20cancer%20severity.",
     "column": 2,
     "row": 5
   },
   {
     "id": 5,
     "fact": "In China AI is being used in education to help children who can’t affor a tutor receive homework help.",
-    "source": "",
+    "source": "https://www.scmp.com/yp/discover/news/asia/article/3212806/chinas-students-leap-great-firewall-get-homework-help-ai-bot-chatgpt",
     "column": 2,
     "row": 5
   },
